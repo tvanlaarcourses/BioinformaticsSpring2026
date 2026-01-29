@@ -359,13 +359,11 @@ display: none;
 
 <style>
 
-h1 {
-font-size: 1.6em;
-}
+h1 { font-size: 1.6em; }
 
 pre.seq {
-white-space: pre-wrap; 
-word-break: break-word; 
+white-space: pre-wrap;
+word-break: break-word;
 overflow-wrap: anywhere;
 font-family: monospace;
 font-size: 13px;
@@ -373,6 +371,8 @@ background: #f7f7f7;
 padding: 8px;
 border: 1px solid #ccc;
 }
+
+button { padding: 8px 12px; margin-right: 8px; }
 </style>
 <div id="sequences-homology" class="section level2">
 <h2>Sequences &amp; Homology</h2>
@@ -410,34 +410,31 @@ ATGCGTACGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATGATCGATCG
 </div>
 <div id="instructions" class="section level2">
 <h2>Instructions</h2>
-<p>For this exercise, an sequence needs to be longer than 150bp in order
-to potentially be an ORF.</p>
+<p>For this exercise, a sequence needs to be longer than <strong>150
+bp</strong> to potentially be an ORF.</p>
 <p>For each sequence (A, B, C) you will:</p>
 <ul>
 <li>Choose one classification: <strong>CDS</strong>,
 <strong>Hypothetical</strong>, or <strong>Ignore</strong>.
 <ul>
-<li><strong>CDS</strong> = you would annotate as a protein-coding
-gene.<br />
+<li><strong>CDS</strong> = annotate as a protein-coding gene<br />
 </li>
 <li><strong>Hypothetical</strong> = likely real but function unknown /
-weak evidence.<br />
+weak evidence<br />
 </li>
 <li><strong>Ignore</strong> = likely not a real gene (or too
-uncertain).</li>
+uncertain)</li>
 </ul></li>
-<li>Write a 1–2 sentence justification referencing evidence: length,
-sequence composition, and homology.</li>
+<li>Write a 1–2 sentence justification referencing evidence:
+<strong>length, sequence composition, and homology</strong>.</li>
 </ul>
-<p>When finished with your table, click <strong>Prepare for
-screenshot</strong> to render a clean submission table (no inputs) that
-you can screenshot and upload.</p>
+<p>When finished, scroll to the bottom and click <strong>Prepare for
+screenshot</strong> to render a clean submission table + reflection you
+can screenshot and upload.</p>
 <hr />
 </div>
 <div id="annotation-table" class="section level2">
 <h2>Annotation table</h2>
-<p>Below is the sequence table. Fill in the classification and a 1–2
-sentence justification for each sequence.</p>
 <table style="width:100%; border-collapse: collapse;" id="inputTable" border="1">
 <thead>
 <tr style="background:#f0f0f0">
@@ -506,55 +503,6 @@ C
 </tr>
 </tbody>
 </table>
-<p>
-<button id="prepareBtn">
-Prepare for screenshot
-</button>
-<button id="clearBtn">
-Clear inputs
-</button>
-</p>
-<div id="preparedArea" style="margin-top:12px">
-
-</div>
-<script>
-// Client-side JS to build a clean table without inputs
-function buildPreparedTable() {
-  var rows = [];
-  for (var i=1;i<=3;i++){
-    var seq = (i===1?"A":(i===2?"B":"C"));
-    var len = document.getElementById("id_"+i).value || "-";
-    var cls = document.getElementById("class_"+i).value || "-";
-    var why = document.getElementById("why_"+i).value || "-";
-    rows.push({Sequence:seq, Length_bp:len, Classification:cls, Justification:why});
-  }
-  // render table
-  var html = "<table style='width:100%; border-collapse: collapse;' border='1'><thead><tr style='background:#f0f0f0'><th>Sequence</th><th>Length (bp)</th><th>Classification</th><th>Justification</th></tr></thead><tbody>";
-  for (var r=0;r<rows.length;r++){
-    html += "<tr>";
-    html += "<td style='padding:6px'>"+rows[r].Sequence+"</td>";
-    html += "<td style='padding:6px'>"+rows[r].Length_bp+"</td>";
-    html += "<td style='padding:6px'>"+rows[r].Classification+"</td>";
-    html += "<td style='padding:6px'>"+rows[r].Justification+"</td>";
-    html += "</tr>";
-  }
-  html += "</tbody></table>";
-  document.getElementById("preparedArea").innerHTML = "<h4>Prepared submission (screenshot this)</h4>" + html;
-}
-
-document.getElementById("prepareBtn").addEventListener("click", function(){
-  buildPreparedTable();
-  window.scrollTo(0, document.getElementById("preparedArea").offsetTop);
-});
-
-document.getElementById("clearBtn").addEventListener("click", function(){
-  for (var i=1;i<=3;i++){
-    document.getElementById("class_"+i).selectedIndex = 0;
-    document.getElementById("why_"+i).value = "";
-  }
-  document.getElementById("preparedArea").innerHTML = "";
-});
-</script>
 <hr />
 </div>
 <div id="reflection" class="section level2">
@@ -575,39 +523,84 @@ would increase your confidence in an annotation</li>
 </ul>
 <p>Focus on <em>what you learned</em>, not on describing the steps of
 the activity.</p>
-<textarea id="reflectionText" rows="8" style="width:100%; font-size:14px;" placeholder="Write your reflection here (5–8 sentences)…">
-</textarea>
+<textarea id="reflectionText" rows="8" style="width:100%; font-size:14px;" placeholder="Write your reflection here (5–8 sentences)…"></textarea>
+<hr />
+</div>
+<div id="prepare-for-screenshot-table-reflection" class="section level2">
+<h2>Prepare for screenshot (table + reflection)</h2>
 <p>
-<button id="prepReflectionBtn">
-Prepare reflection for screenshot
+<button id="prepareBtnBottom">
+Prepare for screenshot
 </button>
-<button id="clearReflectionBtn">
-Clear reflection
+<button id="clearBtnBottom">
+Clear inputs
 </button>
 </p>
-<div id="reflectionPreparedArea" style="margin-top:12px;">
+<div id="preparedArea" style="margin-top:12px">
 
 </div>
 <script>
-document.getElementById("prepReflectionBtn").addEventListener("click", function() {
-  var text = document.getElementById("reflectionText").value || "(no reflection entered)";
+function val(id){
+  var el = document.getElementById(id);
+  if(!el) return "-";
+  var v = el.value;
+  return (v && v.trim().length) ? v.trim() : "-";
+}
 
-  var html =
-    "<h4>Final Reflection (screenshot this)</h4>" +
-    "<div style='border:1px solid #000; padding:10px; white-space:pre-wrap;'>" +
-    text +
-    "</div>";
+function buildPreparedCombined() {
+  var rows = [];
+  for (var i=1;i<=3;i++){
+    var seq = (i===1?"A":(i===2?"B":"C"));
+    var len = val("id_"+i);
+    var clsEl = document.getElementById("class_"+i);
+    var cls = (clsEl && clsEl.value) ? clsEl.value : "-";
+    var why = val("why_"+i);
+    rows.push({Sequence:seq, Length:len, Class:cls, Why:why});
+  }
 
-  document.getElementById("reflectionPreparedArea").innerHTML = html;
-  window.scrollTo(0, document.getElementById("reflectionPreparedArea").offsetTop);
-});
+  var html = "<div style='margin-bottom:12px;'>";
+  html += "<h4>Prepared submission (screenshot this)</h4>";
+  html += "<table style='width:100%; border-collapse: collapse;' border='1'>";
+  html += "<thead><tr style='background:#f0f0f0'>";
+  html += "<th style='padding:6px'>Sequence</th><th style='padding:6px'>Length (bp)</th><th style='padding:6px'>Classification</th><th style='padding:6px'>Justification</th>";
+  html += "</tr></thead><tbody>";
 
-document.getElementById("clearReflectionBtn").addEventListener("click", function() {
-  document.getElementById("reflectionText").value = "";
-  document.getElementById("reflectionPreparedArea").innerHTML = "";
-});
+  for (var r=0;r<rows.length;r++){
+    html += "<tr>";
+    html += "<td style='padding:8px'>"+rows[r].Sequence+"</td>";
+    html += "<td style='padding:8px'>"+rows[r].Length+"</td>";
+    html += "<td style='padding:8px'>"+rows[r].Class+"</td>";
+    html += "<td style='padding:8px'>"+rows[r].Why+"</td>";
+    html += "</tr>";
+  }
+  html += "</tbody></table></div>";
+
+  var refl = val("reflectionText");
+  if (refl === "-") refl = "(no reflection entered)";
+  html += "<div style='border:1px solid #000; padding:10px; white-space:pre-wrap; margin-top:10px;'>";
+  html += "<strong>Final Reflection</strong><div style='margin-top:8px;'>" + refl + "</div></div>";
+
+  document.getElementById("preparedArea").innerHTML = html;
+  window.scrollTo(0, document.getElementById("preparedArea").offsetTop);
+}
+
+function clearAllInputs() {
+  for (var i=1;i<=3;i++){
+    var idInput = document.getElementById("id_"+i);
+    if (idInput) idInput.value = "";
+    var classSel = document.getElementById("class_"+i);
+    if (classSel) classSel.selectedIndex = 0;
+    var whyIn = document.getElementById("why_"+i);
+    if (whyIn) whyIn.value = "";
+  }
+  var refl = document.getElementById("reflectionText");
+  if (refl) refl.value = "";
+  document.getElementById("preparedArea").innerHTML = "";
+}
+
+document.getElementById("prepareBtnBottom").addEventListener("click", buildPreparedCombined);
+document.getElementById("clearBtnBottom").addEventListener("click", clearAllInputs);
 </script>
-<hr />
 </div>
 
 
