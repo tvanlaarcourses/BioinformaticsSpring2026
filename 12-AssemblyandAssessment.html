@@ -11,7 +11,7 @@
 
 <meta name="author" content="BIOL 4810" />
 
-<meta name="date" content="2026-03-04" />
+<meta name="date" content="2026-03-05" />
 
 <title>Day 12 — Galaxy Workflow: QC → Trim → Assemble → Evaluate (and Save for Git)</title>
 
@@ -353,7 +353,7 @@ display: none;
 <h1 class="title toc-ignore">Day 12 — Galaxy Workflow: QC → Trim →
 Assemble → Evaluate (and Save for Git)</h1>
 <h4 class="author">BIOL 4810</h4>
-<h4 class="date">2026-03-04</h4>
+<h4 class="date">2026-03-05</h4>
 
 </div>
 
@@ -370,7 +370,7 @@ font-size: 14px;
 box-sizing: border-box;
 margin: 6px 0 10px 0;
 }
-pre { background:#f7f7f7; padding:10px; border:1px solid #ccc; }
+pre { background:#f7f7f7; padding:10px; border:1px solid #ccc; white-space:pre-wrap; word-break:break-word; }
 .uploadBox{
 border:1px solid #ddd;
 padding:10px;
@@ -378,86 +378,415 @@ border-radius:6px;
 margin:12px 0;
 background:#fafafa;
 }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: 8px; vertical-align: top; }
+th { background: #f3f3f3; }
 @media print{
 button { display:none !important; }
+.uploadBox { break-inside: avoid; }
+#preparedArea { break-inside: avoid; }
 }
 </style>
-<div id="day-12-galaxy-workflow" class="section level1">
-<h1>Day 12 — Galaxy Workflow</h1>
-<p>FASTQC → FASTP → FASTQC → SPAdes → QUAST</p>
+<div id="day-12-galaxy-workflow-and-saving-outputs-for-git" class="section level1">
+<h1>Day 12 — Galaxy Workflow (and saving outputs for Git)</h1>
+<div class="small">
+<p><b>Goal:</b> Run quality control, trimming, assembly, and assembly
+evaluation using Galaxy, then download/rename key outputs and document a
+reproducible workflow you can commit to Git.<br> <b>Workflow:</b> FASTQC
+→ FASTP → FASTQC → SPAdes → QUAST</p>
+</div>
 <hr />
-<div id="step-1-fastqc-raw" class="section level2">
-<h2>Step 1 — FASTQC (Raw)</h2>
-<p>Read length: <input id="q1a" type="text"></p>
-Quality pattern:
+<div id="account-upload-folder-setup-do-this-first" class="section level2">
+<h2>0) Account, upload &amp; folder setup (do this first)</h2>
+<div id="a-create-your-galaxy-account" class="section level3">
+<h3>A) Create your Galaxy account</h3>
+<ol style="list-style-type: decimal">
+<li>Go to <strong><a href="https://usegalaxy.org" class="uri">https://usegalaxy.org</a></strong><br />
+</li>
+<li>Create an account (or log in if you already have one) and confirm
+your email.<br />
+</li>
+<li>In Galaxy, create a clear history name for today’s work (e.g.,
+<code>BIOL4810_day12_&lt;yourname&gt;</code>).</li>
+</ol>
+<p><strong>0A. Galaxy username/email used (for your
+notes):</strong><br />
+<input id="galaxy_id" type="text" placeholder="(your Galaxy account identifier)"></p>
+</div>
+<div id="b-upload-reads-to-galaxy" class="section level3">
+<h3>B) Upload reads to Galaxy</h3>
+<ol style="list-style-type: decimal">
+<li>Click <strong>Upload Data</strong> → choose your FASTQ files
+(paired-end: R1 and R2).<br />
+</li>
+<li>Set a sensible dataset name (include your sampleID). Example:
+<code>Sample1_raw_R1.fastq.gz</code>.<br />
+</li>
+<li>Wait for uploads to finish before moving on.</li>
+</ol>
+<strong>0B. Raw dataset name(s) you uploaded:</strong><br />
+
+<textarea id="raw_names" rows="2" placeholder="e.g., Sample1_R1.fastq.gz; Sample1_R2.fastq.gz"></textarea>
+</div>
+<div id="c-create-your-local-folder-for-git-later" class="section level3">
+<h3>C) Create your local folder (for Git later)</h3>
+<p>Create a folder inside your BIOL 4810 course folder (from Unix/Git
+day), for example:</p>
+<p><code>module2_wgs/day12_galaxy_qc_assembly/</code></p>
+<p><strong>0C. Local folder path you will use:</strong><br />
+<input id="local_folder" type="text" placeholder="e.g., BIOL4810/module2_wgs/day12_galaxy_qc_assembly"></p>
+<hr />
+</div>
+</div>
+<div id="file-naming-convention-required" class="section level2">
+<h2>File naming convention (required)</h2>
+<p>When you download files from Galaxy, rename them using:</p>
+<p><code>&lt;sampleID&gt;_&lt;step&gt;_&lt;tool&gt;_&lt;date&gt;.&lt;ext&gt;</code></p>
+<p>Example: <code>Ecoli1_raw_fastqc_2026-03-02.html</code></p>
+<table>
+<colgroup>
+<col width="30%" />
+<col width="40%" />
+<col width="30%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Output</th>
+<th align="right">What to download from Galaxy</th>
+<th>Rename example</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>FASTQC raw</td>
+<td align="right">FASTQC HTML report (raw reads)</td>
+<td><code>Sample1_raw_fastqc.html</code></td>
+</tr>
+<tr class="even">
+<td>FASTP report</td>
+<td align="right">fastp HTML/JSON report (optional to keep)</td>
+<td><code>Sample1_fastp_report.html</code></td>
+</tr>
+<tr class="odd">
+<td>FASTQC trimmed</td>
+<td align="right">FASTQC HTML report (trimmed reads)</td>
+<td><code>Sample1_trimmed_fastqc.html</code></td>
+</tr>
+<tr class="even">
+<td>Assembly</td>
+<td align="right">SPAdes contigs FASTA</td>
+<td><code>Sample1_spades_contigs.fasta</code></td>
+</tr>
+<tr class="odd">
+<td>QUAST</td>
+<td align="right">QUAST <strong>PDF</strong> report (required)</td>
+<td><code>Sample1_quast_report.pdf</code></td>
+</tr>
+<tr class="even">
+<td>Workflow notes</td>
+<td align="right">your own Markdown file</td>
+<td><code>workflow_day12.md</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>0D. What sampleID will you use for naming (one short
+ID)?</strong><br />
+<input id="sample_id" type="text" placeholder="e.g., Ecoli1, SoilA, Unknown1"></p>
+<hr />
+</div>
+<div id="step-1-initial-quality-check-fastqc-on-raw-reads" class="section level2">
+<h2>Step 1 — Initial quality check (FASTQC on raw reads)</h2>
+<p>In Galaxy: 1. Run <strong>FASTQC</strong> on your raw reads.<br />
+2. Inspect per-base quality plots and adapter content.</p>
+<p><strong>Questions (FASTQC — raw)</strong></p>
+<p><strong>1A. Read length (e.g., 150 bp):</strong><br />
+<input id="q1a" type="text"></p>
+<strong>1B. Does quality drop toward the end of reads? What pattern do
+you see?</strong><br />
+
 <textarea id="q1b" rows="2"></textarea>
-Adapters detected?
+<strong>1C. Are adapter sequences detected or suspected?</strong><br />
+
 <textarea id="q1c" rows="2"></textarea>
-<hr />
-</div>
-<div id="step-2-fastp" class="section level2">
-<h2>Step 2 — FASTP</h2>
-<p>Record from FASTP report:</p>
-<p>Total reads BEFORE: <input id="fp_before_reads" type="text"></p>
-<p>Total reads AFTER: <input id="fp_after_reads" type="text"></p>
-<p>Q30 BEFORE: <input id="fp_q30_before" type="text"></p>
-<p>Q30 AFTER: <input id="fp_q30_after" type="text"></p>
-<p>Mean length BEFORE: <input id="fp_len_before" type="text"></p>
-<p>Mean length AFTER: <input id="fp_len_after" type="text"></p>
-<div id="interpretation" class="section level3">
-<h3>Interpretation</h3>
-What changed most?
-<textarea id="fp_changes" rows="3"></textarea>
-Do you expect trimming to improve assembly?
-<textarea id="fp_assembly_effect" rows="3"></textarea>
-<hr />
-</div>
-</div>
-<div id="step-3-fastqc-trimmed" class="section level2">
-<h2>Step 3 — FASTQC (Trimmed)</h2>
-Did quality improve?
-<textarea id="q3a" rows="2"></textarea>
-<hr />
-</div>
-<div id="step-4-spades" class="section level2">
-<h2>Step 4 — SPAdes</h2>
-<p>What file did you download? <input id="spades_file" type="text"></p>
-<hr />
-</div>
-<div id="step-5-quast-assembly-metrics" class="section level2">
-<h2>Step 5 — QUAST (Assembly Metrics)</h2>
-<p>Record from QUAST:</p>
-<p>Number of contigs: <input id="q5_contigs" type="text"></p>
-<p>Total assembly length: <input id="q5_total" type="text"></p>
-<p>N50: <input id="q5a" type="text"></p>
-<p>L50: <input id="q5b" type="text"></p>
-<p>Largest contig: <input id="q5c" type="text"></p>
 <div class="uploadBox">
-<p><strong>Upload QUAST PDF report (required)</strong>
-<input type="file" id="quast_pdf" accept="application/pdf"></p>
+<p><strong>Upload screenshot: FASTQC quality plot (raw)</strong><br>
+<input type="file" id="fastqc1_img" accept="image/*">
+<img id="fastqc1_preview" class="previewImg" style="display:none; max-width:100%; margin-top:8px;"></p>
 </div>
 <hr />
 </div>
-<div id="interpretation-1" class="section level2">
-<h2>Interpretation</h2>
-Is this assembly fragmented?
+<div id="step-2-trim-and-filter-fastp" class="section level2">
+<h2>Step 2 — Trim and filter (fastp)</h2>
+<p>In Galaxy: 1. Run <strong>fastp</strong> on your raw reads (default
+settings are fine unless instructor says otherwise).<br />
+2. Save the <strong>trimmed FASTQ</strong> output and the fastp report
+(HTML/JSON) for your records.</p>
+<p><strong>Questions (fastp)</strong></p>
+<strong>2A. What did fastp remove/trim? (adapters, low-quality tails,
+short reads, etc.)</strong><br />
+
+<textarea id="q2a" rows="2"></textarea>
+<strong>2B. Did read length / counts change after trimming? If so,
+how?</strong><br />
+
+<textarea id="q2b" rows="2"></textarea>
+<p><em>(You do not need to upload the fastp HTML; keep it for your
+workflow folder.)</em></p>
+<hr />
+</div>
+<div id="step-3-fastqc-again-after-trimming" class="section level2">
+<h2>Step 3 — FASTQC again (after trimming)</h2>
+<p>In Galaxy: 1. Run <strong>FASTQC</strong> on the trimmed reads.<br />
+2. Inspect the report.</p>
+<p><strong>Questions (FASTQC — trimmed)</strong></p>
+<strong>3A. Did overall quality improve compared to raw?</strong><br />
+
+<textarea id="q3a" rows="2"></textarea>
+<strong>3B. Are adapters still present?</strong><br />
+
+<textarea id="q3b" rows="2"></textarea>
+<div class="uploadBox">
+<p><strong>Upload screenshot: FASTQC quality plot (trimmed)</strong><br>
+<input type="file" id="fastqc2_img" accept="image/*">
+<img id="fastqc2_preview" class="previewImg" style="display:none; max-width:100%; margin-top:8px;"></p>
+</div>
+<hr />
+</div>
+<div id="step-4-assembly-spades-on-trimmed-reads" class="section level2">
+<h2>Step 4 — Assembly (SPAdes on trimmed reads)</h2>
+<p>In Galaxy: 1. Run <strong>SPAdes</strong> using your trimmed reads
+(paired-end if available).<br />
+2. Download the contigs FASTA file.</p>
+<p><strong>Questions (SPAdes — note: summary metrics come from
+QUAST)</strong></p>
+<p><strong>4A. What is the filename you downloaded from
+SPAdes?</strong><br />
+<input id="spades_file" type="text" placeholder="e.g., Sample1_spades_contigs.fasta"></p>
+<hr />
+</div>
+<div id="step-5-evaluation-quast" class="section level2">
+<h2>Step 5 — Evaluation (QUAST)</h2>
+<p>In Galaxy: 1. Run <strong>QUAST</strong> on your SPAdes
+contigs.<br />
+2. Download the <strong>QUAST PDF report</strong> (required for
+submission).</p>
+<p><strong>Record (QUAST)</strong></p>
+<p><strong>5A. N50:</strong><br />
+<input id="q5a" type="text"></p>
+<p><strong>5B. L50:</strong><br />
+<input id="q5b" type="text"></p>
+<p><strong>5C. Number of contigs:</strong><br />
+<input id="q5_contigs" type="text"></p>
+<p><strong>5D. Total assembly length (bp):</strong><br />
+<input id="q5_total" type="text"></p>
+<div class="uploadBox">
+<strong>Upload QUAST PDF report (required)</strong><br>
+<input type="file" id="quast_pdf" accept="application/pdf">
+<div id="quast_pdf_note" class="fileNote">
+(no PDF uploaded yet)
+</div>
+</div>
+<hr />
+</div>
+<div id="interpretation-short-answers" class="section level2">
+<h2>Interpretation (short answers)</h2>
+<strong>6A. Did trimming likely improve the assembly? Why or why
+not?</strong><br />
+
+<textarea id="q6a" rows="3"></textarea>
+<strong>6B. Is this assembly fragmented? Which metric(s) support your
+answer?</strong><br />
+
 <textarea id="q6b" rows="3"></textarea>
 <hr />
 </div>
-<div id="git-requirement" class="section level2">
-<h2>Git Requirement</h2>
-<p>Make sure you:</p>
-<ul>
-<li>Download and rename FASTQC reports</li>
-<li>Download and rename FASTP report</li>
-<li>Download and rename contigs.fasta</li>
-<li>Download and rename QUAST PDF</li>
-<li>Create workflow_day12.md</li>
-<li>Commit everything to Git</li>
-</ul>
-<button onclick="window.print()">
-Print / Save as PDF
+<div id="reproducibility-checklist-download-rename-document" class="section level2">
+<h2>Reproducibility checklist (download + rename + document)</h2>
+<div id="a-download-and-rename-these-files-into-your-local-folder" class="section level3">
+<h3>A) Download and rename these files into your local folder</h3>
+<p>Check each item after you have downloaded <strong>and
+renamed</strong> it:</p>
+<div class="uploadBox">
+<p><label><input type="checkbox" id="ck_fastqc_raw"> FASTQC (raw) report
+downloaded + renamed</label><br>
+<label><input type="checkbox" id="ck_fastp"> fastp report downloaded +
+renamed (recommended)</label><br>
+<label><input type="checkbox" id="ck_fastqc_trimmed"> FASTQC (trimmed)
+report downloaded + renamed</label><br>
+<label><input type="checkbox" id="ck_contigs"> SPAdes contigs FASTA
+downloaded + renamed</label><br>
+<label><input type="checkbox" id="ck_quast_pdf"> QUAST PDF report
+downloaded + renamed</label><br>
+<label><input type="checkbox" id="ck_notes">
+<code>workflow_day12.md</code> created in your folder</label></p>
+</div>
+</div>
+<div id="b-record-tool-versions-from-galaxy-job-info" class="section level3">
+<h3>B) Record tool versions (from Galaxy Job Info)</h3>
+<p>Click a dataset → view details/job info and record version
+numbers.</p>
+<p><strong>FASTQC version:</strong><br />
+<input id="v_fastqc" type="text" placeholder="e.g., FastQC v0.11.9 (Galaxy wrapper …)"></p>
+<p><strong>fastp version:</strong><br />
+<input id="v_fastp" type="text" placeholder="e.g., fastp v0.23.4"></p>
+<p><strong>SPAdes version:</strong><br />
+<input id="v_spades" type="text" placeholder="e.g., SPAdes v3.15.x"></p>
+<p><strong>QUAST version:</strong><br />
+<input id="v_quast" type="text" placeholder="e.g., QUAST v5.x"></p>
+</div>
+<div id="c-write-your-workflow-notes-copypaste-into-workflow_day12.md" class="section level3">
+<h3>C) Write your workflow notes (copy/paste into
+<code>workflow_day12.md</code>)</h3>
+<p>Use your sampleID and versions.</p>
+<pre>
+# Day 12 — Galaxy QC → Trim → Assembly → QUAST
+
+## Sample
+- sampleID: YOUR_SAMPLEID
+- raw data: (where it came from / dataset name)
+
+## Tools (Galaxy / usegalaxy.org)
+- FastQC: VERSION
+- fastp: VERSION
+- SPAdes: VERSION
+- QUAST: VERSION
+
+## Steps
+1. FastQC on raw reads → saved report as: YOUR_SAMPLEID_raw_fastqc.html
+2. fastp trimming (default settings) → saved report as: YOUR_SAMPLEID_fastp_report.html
+3. FastQC on trimmed reads → saved report as: YOUR_SAMPLEID_trimmed_fastqc.html
+4. SPAdes assembly on trimmed reads → saved contigs as: YOUR_SAMPLEID_spades_contigs.fasta
+5. QUAST evaluation on contigs → saved report as: YOUR_SAMPLEID_quast_report.pdf
+
+## Notes / interpretation
+- (1–3 bullets on what changed after trimming)
+- (1–3 bullets on what QUAST suggests about contiguity)
+</pre>
+<hr />
+</div>
+</div>
+<div id="export-pdf-submission" class="section level2">
+<h2>Export (PDF) &amp; Submission</h2>
+<ol style="list-style-type: decimal">
+<li>Click <strong>Prepare submission preview</strong> (generates a clean
+summary).<br />
+</li>
+<li>Click <strong>Download as PDF (Print)</strong> and save.<br />
+</li>
+<li>Commit your downloaded/renamed files +
+<code>workflow_day12.md</code> to your Git repo.</li>
+</ol>
+<p>
+<button id="prepareBtn">
+Prepare submission preview
 </button>
+<button id="printBtn">
+Download as PDF (Print)
+</button>
+<button id="clearBtn">
+Clear
+</button>
+</p>
+<div id="preparedArea" style="margin-top:15px;">
+
+</div>
+<script>
+function previewImage(inputId, imgId){
+  var input=document.getElementById(inputId);
+  var img=document.getElementById(imgId);
+  input.addEventListener("change",function(){
+    if(input.files && input.files[0]){
+      img.src=URL.createObjectURL(input.files[0]);
+      img.style.display="block";
+    }
+  });
+}
+previewImage("fastqc1_img","fastqc1_preview");
+previewImage("fastqc2_img","fastqc2_preview");
+
+document.getElementById("quast_pdf").addEventListener("change", function(){
+  var n = (this.files && this.files[0]) ? this.files[0].name : "(no PDF uploaded yet)";
+  document.getElementById("quast_pdf_note").innerText = "Selected file: " + n;
+});
+
+function val(id){
+  var el=document.getElementById(id);
+  return el && el.value && el.value.trim().length ? el.value.trim() : "-";
+}
+function chk(id){
+  var el=document.getElementById(id);
+  return (el && el.checked) ? "Yes" : "No";
+}
+function esc(s){
+  return s.replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;"); 
+}
+
+function buildPrepared(){
+  var html="<h3>Submission preview</h3>";
+
+  html += "<div style='border:1px solid #000; padding:10px; margin-bottom:10px;'>";
+  html += "<strong>Setup</strong><br>";
+  html += "<em>Galaxy account:</em> "+esc(val("galaxy_id"))+"<br>";
+  html += "<em>Raw datasets:</em> "+esc(val("raw_names"))+"<br>";
+  html += "<em>Local folder:</em> "+esc(val("local_folder"))+"<br>";
+  html += "<em>sampleID:</em> "+esc(val("sample_id"))+"<br>";
+  html += "</div>";
+
+  html+="<strong>FASTQC (raw):</strong><pre>";
+  html+="Read length: "+esc(val("q1a"))+"\n";
+  html+="Quality pattern: "+esc(val("q1b"))+"\n";
+  html+="Adapters: "+esc(val("q1c"));
+  html+="</pre>";
+
+  html+="<strong>fastp:</strong><pre>";
+  html+="Removed/trimmed: "+esc(val("q2a"))+"\n";
+  html+="Read counts change: "+esc(val("q2b"));
+  html+="</pre>";
+
+  html+="<strong>FASTQC (trimmed):</strong><pre>";
+  html+="Quality improvement: "+esc(val("q3a"))+"\n";
+  html+="Adapters after trimming: "+esc(val("q3b"));
+  html+="</pre>";
+
+  html+="<strong>SPAdes:</strong><pre>";
+  html+="Downloaded contigs file: "+esc(val("spades_file"))+"\n";
+  html+="</pre>";
+
+  html+="<strong>QUAST:</strong><pre>";
+  html+="N50: "+esc(val("q5a"))+"\n";
+  html+="L50: "+esc(val("q5b"))+"\n";
+  html+="# contigs: "+esc(val("q5_contigs"))+"\n";
+  html+="Total length: "+esc(val("q5_total"));
+  html+="</pre>";
+
+  html+="<strong>Interpretation:</strong><pre>";
+  html+="Trimming effect: "+esc(val("q6a"))+"\n\n";
+  html+="Fragmentation: "+esc(val("q6b"));
+  html+="</pre>";
+
+  html+="<strong>Versions (from Galaxy Job Info):</strong><pre>";
+  html+="FastQC: "+esc(val("v_fastqc"))+"\n";
+  html+="fastp: "+esc(val("v_fastp"))+"\n";
+  html+="SPAdes: "+esc(val("v_spades"))+"\n";
+  html+="QUAST: "+esc(val("v_quast"));
+  html+="</pre>";
+
+  html+="<strong>Reproducibility checklist:</strong><pre>";
+  html+="FASTQC raw downloaded+renamed: "+chk("ck_fastqc_raw")+"\n";
+  html+="fastp report downloaded+renamed: "+chk("ck_fastp")+"\n";
+  html+="FASTQC trimmed downloaded+renamed: "+chk("ck_fastqc_trimmed")+"\n";
+  html+="SPAdes contigs downloaded+renamed: "+chk("ck_contigs")+"\n";
+  html+="QUAST PDF downloaded+renamed: "+chk("ck_quast_pdf")+"\n";
+  html+="workflow_day12.md created: "+chk("ck_notes");
+  html+="</pre>";
+
+  document.getElementById("preparedArea").innerHTML=html;
+}
+
+document.getElementById("prepareBtn").onclick=buildPrepared;
+document.getElementById("printBtn").onclick=function(){ buildPrepared(); window.print(); };
+document.getElementById("clearBtn").onclick=function(){ location.reload(); };
+</script>
 </div>
 </div>
 
